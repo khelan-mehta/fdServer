@@ -12,12 +12,12 @@ import { SessionSerializer } from './guards/Serializer';
 import { UserService } from './services/user.service';
 import { ConfigModule } from '@nestjs/config';
 
-import { ApplicationModule } from './modules/application.module';
-import { ExcelUploadController } from './controllers/upload.controller';
+
+
 @Module({
   imports: [ 
     MongooseModule.forRoot(
-      'mongodb+srv://Khelan05:KrxRwjRwkhgYUdwh@cluster0.c6y9phd.mongodb.net/taxify?retryWrites=true&w=majority',
+      'mongodb+srv://Khelan05:KrxRwjRwkhgYUdwh@cluster0.c6y9phd.mongodb.net/fd1?retryWrites=true&w=majority',
     ),
     ConfigModule.forRoot({ isGlobal: true }),
     MailerModule.forRoot({
@@ -39,14 +39,14 @@ import { ExcelUploadController } from './controllers/upload.controller';
       signOptions: { expiresIn: '30d' },
     }),
     
-    ApplicationModule,
+    
   ],
-  controllers: [AuthController, ExcelUploadController],
+  controllers: [AuthController],
   providers: [
     AuthService,
     UserService,
     JwtStrategy,
-    GoogleStrategy,
+    
     SessionSerializer,
     {
       provide: 'AUTH_SERVICE',

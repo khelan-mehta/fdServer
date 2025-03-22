@@ -32,90 +32,43 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  async login(@Body() loginDto: { email: string; password: string }) {
-    const user = await this.authService.validateUser(
-      loginDto.email,
-      loginDto.password,
-    );
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    return this.authService.login(user);
+  async login(@Body() loginDto: { email: string; password: string; token: string }) {
+  const user = await this.authService.validateUser(
+    loginDto.email,
+    loginDto.password,
+    loginDto.token,
+  );
+
+  if (!user) {
+    throw new UnauthorizedException('Invalid credentials or unauthorized device');
+  }
+
+  return this.authService.login(user);
   }
 
   @Post('register')
   async register(
     @Body()
     registerDto: {
-      email: string;
+      name: string;
+      email:string;
+      address: string;
+      macAddresses: string[]; // Allow multiple device logins
+      mobileNumber: string;
       password: string;
-      gstin: string;
-      fname: string;
-      panNo: string;
-      companyName: string;
-      organizationLocation: string;
-      industryType: string;
-      state: string;
-      cityName: string;
-      zipcode: string;
-      phoneNumber: string;
     },
   ) {
     try {
       const response = await this.authService.register(registerDto);
       return response; // Returning accessToken and userId
     } catch (error) {
+      console.log(error.message);
+      
       return { message: error.message };
     }
   }
 
-  @Get('google/login')
-  @UseGuards(GoogleAuthGuard)
-  async googleLogin() {
-    return { message: 'Redirecting to Google' };
-  }
-
-  @Get('google/redirect')
-  @UseGuards(GoogleAuthGuard)
-  async googleLoginCallback(@Req() req, @Res() res: Response) {
-    const googleUser = req.user; // This will contain Google profile info
-    const redirectBaseUrl = process.env.HOME_URL_2;
-
-    // Try to find an existing user by email
-    let user = await this.authService.findUserByEmail(googleUser.email);
-
-    if (user) {
-      // Link Google login info to the existing account
-      await this.authService.linkGoogleAccount(user, googleUser);
-
-      // Check if the user has a username, implying they are registered
-      if (user.username) {
-        user.isRegistered = true; // Set isRegistered to true if the user has a username
-        await user.save(); // Save the updated user
-      }
-    } else {
-      // Check if the user is not registered before creating a new account
-      if (!googleUser.isRegistered) {
-        // Redirect with a message query parameter
-        return res.redirect(
-          `${redirectBaseUrl}/auth/register?message=kindly%20register%20first`,
-        );
-      }
-
-      // Create a new user with Google info if the user is registered
-      user = await this.authService.createUserWithGoogle(googleUser);
-    }
-
-    // Generate an access token for the user
-    const accessToken = this.authService.generateAccessToken(user);
-
-    // Save the access token in the database
-    await this.authService.saveAccessToken(user.id, await accessToken);
-
-    // Redirect to the appropriate page with the access token and user ID
-    const redirectUrl = `${redirectBaseUrl}/dashboard?access_token=${await accessToken}&userId=${user.id}`;
-    return res.redirect(redirectUrl);
-  }
+  
 
   @Get('protected')
   @UseGuards(JwtAuthGuard)
@@ -180,6 +133,23 @@ export class AuthController {
 
     return { message: 'OTP verified successfully' };
   }
+
+  @Get('users/:id')
+async getAllUsersExceptCurrent(@Param('id') userId: string, @Res() res: Response) {
+  try {
+    // Fetch all users except the one with the provided userId
+    const users = await this.userService.getAllUsersExcept(userId);
+    
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: 'No users found' });
+    }
+
+    return res.status(200).json({ message: 'Users retrieved successfully', users });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+}
+
 
   // Endpoint for password reset
   @Post('reset-password')

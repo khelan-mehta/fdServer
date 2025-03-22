@@ -1,51 +1,34 @@
-import { Schema, Document, model } from 'mongoose';
+import { Schema, Document } from 'mongoose';
 
 export interface User extends Document {
+  name: string;
   email: string;
+  
+  address: string;
+  macAddresses: string[];
+  otp: string;
+  verifiedOtp: boolean;
+  otpExpiresAt: number;
+  mobileNumber: string;
   password: string;
-  gstin?: string;
-  fname?: string;
-  panNo?: string;
-  companyName?: string;
-  organizationLocation?: string;
-  industryType?: string;
-  state?: string;
-  cityName?: string;
-  zipcode?: string;
-  phoneNumber?: string;
-  googleId?: string;
-  googleToken?: string;
-  isGoogleUser?: boolean;
-  username?: string;
-  otp?: string; // OTP field
-  otpExpiresAt?: number; // OTP expiration time in milliseconds
-  verifiedOtp?: boolean;
+  amountAvailable: number;
+  isLoggedIn: boolean;
+  isKYCVerified: boolean;
   accessToken?: string;
-  isRegistered?: boolean;
 }
 
 export const UserSchema = new Schema<User>({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  gstin: { type: String, required: false },
-  fname: { type: String, required: false },
-  panNo: { type: String, required: false },
-  companyName: { type: String, required: false },
-  organizationLocation: { type: String, required: false },
-  industryType: { type: String, required: false },
-  state: { type: String, required: false },
-  cityName: { type: String, required: false },
-  zipcode: { type: String, required: false },
-  username: { type: String, required: false },
-  phoneNumber: { type: String, required: false },
-  googleId: { type: String, required: false },
-  googleToken: { type: String, required: false },
-  isGoogleUser: { type: Boolean, default: false },
+  email: { type: String, required: true },
+  name: { type: String, required: true },
+  address: { type: String, required: true },
+  macAddresses: { type: [String], required: true },
   otp: { type: String, required: false },
   otpExpiresAt: { type: Number, required: false },
   verifiedOtp: { type: Boolean, default: false },
-  accessToken: { type: String, required: false },
-  isRegistered: { type: Boolean, default: false },
+  mobileNumber: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  amountAvailable: { type: Number, default: 2000 },
+  isLoggedIn: { type: Boolean, default: false },
+  isKYCVerified: { type: Boolean, default: false },
+  accessToken: { type: String },
 });
-
-export const UserModel = model<User>('User', UserSchema);

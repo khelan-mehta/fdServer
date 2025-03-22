@@ -54,28 +54,28 @@ export class AuthService {
     return this.userModel.findOne({ email }).exec();
   }
 
-  async validateUser(email: string, encryptedPassword: string): Promise<any> {
-    const user = await this.findUserByEmail(email);
+  async validateUser(email: string, password: string, deviceId: string) {
+    const user = await this.userModel.findOne({ email });
 
-    if (!user) return null;
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
 
-    // Decrypt the password
-    const secretKey = 'your_private_key';
-    const bytes = CryptoJS.AES.decrypt(encryptedPassword, secretKey);
-    const decryptedPassword = bytes.toString(CryptoJS.enc.Utf8);
+    
+    const decryptedPassword = password;
 
     if (!decryptedPassword) {
       throw new UnauthorizedException('Failed to decrypt password');
     }
 
-    // Compare the decrypted password with the hashed password in DB
-    const isPasswordValid = await bcrypt.compare(
-      decryptedPassword,
-      user.password,
-    );
-
+    const isPasswordValid = await bcrypt.compare(decryptedPassword, user.password);
     if (!isPasswordValid) {
-      return null;
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    // Check if the device is allowed
+    if (!user.macAddresses.includes(deviceId)) {
+      throw new UnauthorizedException('Unauthorized device');
     }
 
     return user;
@@ -83,57 +83,42 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { email: user.email, sub: user._id };
-
-    // Generate the access token
+  
+    // Generate JWT access token
     const accessToken = this.jwtService.sign(payload);
-
+  
     // Save the access token in the user model
     await this.userModel.findByIdAndUpdate(
       user._id,
+      
       { accessToken },
       { new: true },
     );
-
+  
     // Return the token and user ID
     return {
       access_token: accessToken,
       userId: user._id,
+      user: user,
     };
   }
+  
 
   async register(registerDto: {
+    name: string;
     email: string;
+    
+    address: string;
+    macAddresses: string[];
+    mobileNumber: string;
     password: string;
-    gstin: string;
-    fname: string;
-    panNo: string;
-    companyName: string;
-    organizationLocation: string;
-    industryType: string;
-    state: string;
-    cityName: string;
-    zipcode: string;
-    phoneNumber: string;
   }) {
-    const {
-      email,
-      password,
-      gstin,
-      fname,
-      panNo,
-      companyName,
-      organizationLocation,
-      industryType,
-      state,
-      cityName,
-      zipcode,
-      phoneNumber,
-    } = registerDto;
+    const { name,  address, macAddresses, mobileNumber, password, email } =
+      registerDto;
 
     try {
-      const secretKey = 'your_private_key';
-      const bytes = CryptoJS.AES.decrypt(password, secretKey);
-      const decryptedPassword = bytes.toString(CryptoJS.enc.Utf8);
+      
+      const decryptedPassword = password;
 
       if (!decryptedPassword) {
         throw new Error('Failed to decrypt password');
@@ -141,31 +126,32 @@ export class AuthService {
 
       const hashedPassword = await bcrypt.hash(decryptedPassword, 10);
 
-      // Check if a user with the same email already exists
-      const existingUser = await this.userModel.findOne({ email });
+      // Check if a user with the same mobile number already exists
+      const existingUser = await this.userModel.findOne({ mobileNumber });
       if (existingUser) {
-        throw new Error('Email is already in use');
+        throw new Error('Mobile number is already in use');
       }
 
       const newUser = new this.userModel({
+        name,
+        
         email,
+        address,
+        macAddresses,
+        mobileNumber,
         password: hashedPassword,
-        gstin,
-        fname,
-        panNo,
-        companyName,
-        organizationLocation,
-        industryType,
-        state,
-        cityName,
-        zipcode,
-        phoneNumber,
-        username: Date.now().toString(),
+        amountAvailable: 2000, // Default balance
+        isLoggedIn: false, // Default flag
+        isKYCVerified: false, // Default flag
       });
+
       await newUser.save();
 
       // Generate JWT access token
-      const payload = { userId: newUser._id, email: newUser.email };
+      const payload = {
+        userId: newUser._id,
+        mobileNumber: newUser.mobileNumber,
+      };
       const accessToken = this.jwtService.sign(payload);
 
       // Save the accessToken in the database
