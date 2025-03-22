@@ -14,13 +14,18 @@ async function bootstrap() {
   // Increase payload limit
   app.use(bodyParser.json({ limit: '50mb' })); // Adjust the limit as needed
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-  app.setGlobalPrefix('api');
-  app.enableCors();
+
+  // Fix CORS configuration
+  app.enableCors({
+    origin: 'https://fd-c.vercel.app', // Allow requests from this origin
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true
+  });
 
   // Initiating Swagger
   const config = new DocumentBuilder()
     .setTitle('MarkTailor API')
-    .setDescription('Contains API Definations for Retailer, GM and worker')
+    .setDescription('Contains API Definitions for Retailer, GM, and Worker')
     .setVersion('1.0')
     .addTag('dev')
     .build();
