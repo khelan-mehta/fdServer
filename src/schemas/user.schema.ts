@@ -15,6 +15,7 @@ export interface User extends Document {
   isLoggedIn: boolean;
   isKYCVerified: boolean;
   accessToken?: string;
+  fraudCount: number;
 }
 
 export const UserSchema = new Schema<User>({
@@ -31,4 +32,5 @@ export const UserSchema = new Schema<User>({
   isLoggedIn: { type: Boolean, default: false },
   isKYCVerified: { type: Boolean, default: false },
   accessToken: { type: String },
+  fraudCount: {type: Number, default: 0}
 });

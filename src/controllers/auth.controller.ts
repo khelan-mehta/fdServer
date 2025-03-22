@@ -22,6 +22,8 @@ import { log } from 'node:console';
 import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/services/user.service';
+import { Transaction } from 'src/schemas/transaction.schema';
+import { BlockchainService, chain } from 'src/services/blockchain.service';
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +31,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
+    private readonly blockchain: BlockchainService
   ) {}
 
   @Post('login')
@@ -164,5 +167,20 @@ async getAllUsersExceptCurrent(@Param('id') userId: string, @Res() res: Response
     }
 
     return { message: 'Password reset successful' };
+  }
+
+  @Post('user/transaction')
+  async createTransaction(@Body('transaction') txn: Transaction) {
+    this.blockchain.processTransaction(txn);
+  }
+
+  @Post('user/update-fraud')
+  async updateFraud(@Body('transaction') txn: Transaction) {
+    this.blockchain.updateFraud(txn);
+  }
+
+  @Post('user/get-transactions')
+  async getUserTransactions(@Body('userId') uid: string) {
+    return chain;
   }
 }

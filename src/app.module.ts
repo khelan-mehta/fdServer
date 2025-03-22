@@ -11,6 +11,8 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { SessionSerializer } from './guards/Serializer';
 import { UserService } from './services/user.service';
 import { ConfigModule } from '@nestjs/config';
+import { BlockchainService } from './services/blockchain.service';
+import { TransactionSchema } from './schemas/transaction.schema';
 
 
 
@@ -32,7 +34,7 @@ import { ConfigModule } from '@nestjs/config';
         },
       },
     }),
-    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }, {name: 'TransactionBlock', schema: TransactionSchema}]),
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your_jwt_secret', // Use environment variables for production
@@ -46,7 +48,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthService,
     UserService,
     JwtStrategy,
-    
+    BlockchainService,
     SessionSerializer,
     {
       provide: 'AUTH_SERVICE',
