@@ -1,9 +1,19 @@
 import { Schema, Document } from 'mongoose';
 
+export interface Transaction {
+  txnId: string;
+  userId: string;
+  recieverId: string;
+  amount: number;
+  userMacAdd: string;
+  userLocation: any;
+  recieverLocation: any;
+  date: Date;
+}
+
 export interface User extends Document {
   name: string;
   email: string;
-  
   address: string;
   macAddresses: string[];
   otp: string;
@@ -16,6 +26,7 @@ export interface User extends Document {
   isKYCVerified: boolean;
   accessToken?: string;
   fraudCount: number;
+  transactions: Transaction[];
 }
 
 export const UserSchema = new Schema<User>({
@@ -32,5 +43,17 @@ export const UserSchema = new Schema<User>({
   isLoggedIn: { type: Boolean, default: false },
   isKYCVerified: { type: Boolean, default: false },
   accessToken: { type: String },
-  fraudCount: {type: Number, default: 0}
+  fraudCount: { type: Number, default: 0 },
+  transactions: [
+    {
+      txnId: { type: String, required: false },
+      userId: { type: String, required: false },
+      recieverId: { type: String, required: false },
+      amount: { type: Number, required: false },
+      userMacAdd: { type: String, required: false },
+      userLocation: { type: Schema.Types.Mixed, required: false},
+      recieverLocation: { type: Schema.Types.Mixed, required: false },
+      date: { type: Date, default: Date.now },
+    },
+  ],
 });
